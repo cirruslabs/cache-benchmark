@@ -29,24 +29,25 @@ jobs:
         working-directory: xcode_project_with_cache
         run: tuist setup cache
 
+      - name: Create logs directory
+        run: mkdir logs
+
       - name: Benchmark clean build with cache uploads
         working-directory: xcode_project_with_cache
         run: |
           hyperfine --warmup 1 --runs 10 \
             --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData && ../tuist-setup-temp-project && tuist setup cache' \
             --conclude '../tuist-cleanup-temp-project' \
-            'HANDLE="$(cat .tuist-temp-org)_$(cat .tuist-temp-project)" && xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.local/state/tuist/$HANDLE.sock"' \
-            --show-output
+            'HANDLE="$(cat .tuist-temp-org)_$(cat .tuist-temp-project)" && xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.local/state/tuist/$HANDLE.sock" >> ../logs/benchmark-cache-uploads.log 2>&1'
 
       # Benchmark 2: Clean build with pre-warmed cache
       - name: Benchmark clean build with pre-warmed cache
         working-directory: xcode_project_with_cache
         run: |
           hyperfine --warmup 1 --runs 10 \
-            --setup 'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build' \
+            --setup 'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build >> ../logs/benchmark-pre-warmed-setup.log 2>&1' \
             --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData' \
-            'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build' \
-            --show-output
+            'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build >> ../logs/benchmark-pre-warmed-cache.log 2>&1'
 
       # Benchmark 3: Clean build without caching
       - name: Benchmark clean build without caching
@@ -54,8 +55,7 @@ jobs:
         run: |
           hyperfine --warmup 1 --runs 10 \
             --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData' \
-            'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_ENABLE_CACHING=NO' \
-            --show-output
+            'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_ENABLE_CACHING=NO >> ../logs/benchmark-no-caching.log 2>&1'
 
       # Benchmark 3: Clean build with local caching
       - name: Benchmark clean build with local caching
@@ -63,6 +63,11 @@ jobs:
         run: |
           hyperfine --warmup 1 --runs 10 \
             --setup 'rm -rf ~/Library/Developer/Xcode/DerivedData' \
-            --prepare 'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" clean' \
-            'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_ENABLE_PLUGIN=NO' \
-            --show-output
+            --prepare 'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" clean >> ../logs/benchmark-local-clean.log 2>&1' \
+            'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_ENABLE_PLUGIN=NO >> ../logs/benchmark-local-caching.log 2>&1'
+
+      - name: Upload benchmark logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-logs
+          path: logs/*.log
