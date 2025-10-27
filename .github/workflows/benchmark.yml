@@ -11,8 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  benchmark-cache:
-    name: Benchmark Tuist Cache
+  cache-uploads:
+    name: Clean build with cache uploads
     runs-on: namespace-profile-default-macos
     timeout-minutes: 20
     steps:
@@ -40,7 +40,33 @@ jobs:
             --conclude '../tuist-cleanup-temp-project' \
             'HANDLE="$(cat .tuist-temp-org)_$(cat .tuist-temp-project)" && xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.local/state/tuist/$HANDLE.sock" >> ../logs/benchmark-cache-uploads.log 2>&1'
 
-      # Benchmark 2: Clean build with pre-warmed cache
+      - name: Upload benchmark logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-logs-cache-uploads
+          path: logs/*.log
+
+  pre-warmed:
+    name: Clean build with pre-warmed cache
+    runs-on: namespace-profile-default-macos
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Authenticate Tuist
+        working-directory: xcode_project_with_cache
+        run: TUIST_URL="https://staging.tuist.dev" tuist auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
+
+      - name: Setup Tuist Cache
+        working-directory: xcode_project_with_cache
+        run: tuist setup cache
+
+      - name: Create logs directory
+        run: mkdir logs
+
       - name: Benchmark clean build with pre-warmed cache
         working-directory: xcode_project_with_cache
         run: |
@@ -49,7 +75,25 @@ jobs:
             --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData' \
             'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build >> ../logs/benchmark-pre-warmed-cache.log 2>&1'
 
-      # Benchmark 3: Clean build without caching
+      - name: Upload benchmark logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-logs-pre-warmed
+          path: logs/*.log
+
+  no-caching:
+    name: Clean build without caching
+    runs-on: namespace-profile-default-macos
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create logs directory
+        run: mkdir logs
+
       - name: Benchmark clean build without caching
         working-directory: xcode_project_with_cache
         run: |
@@ -57,7 +101,25 @@ jobs:
             --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData' \
             'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_ENABLE_CACHING=NO >> ../logs/benchmark-no-caching.log 2>&1'
 
-      # Benchmark 3: Clean build with local caching
+      - name: Upload benchmark logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-logs-no-caching
+          path: logs/*.log
+
+  local-caching:
+    name: Clean build with local caching
+    runs-on: namespace-profile-default-macos
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create logs directory
+        run: mkdir logs
+
       - name: Benchmark clean build with local caching
         working-directory: xcode_project_with_cache
         run: |
@@ -69,5 +131,5 @@ jobs:
       - name: Upload benchmark logs
         uses: actions/upload-artifact@v4
         with:
-          name: benchmark-logs
+          name: benchmark-logs-local-caching
           path: logs/*.log
