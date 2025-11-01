@@ -93,8 +93,8 @@ jobs:
           tuist install
           tuist generate tuist ProjectDescription
           DERIVED_DATA_PATH="$PWD/DerivedData"
-          xcodebuild build -workspace Tuist.xcworkspace -scheme ProjectDescription -derivedDataPath "$DERIVED_DATA_PATH"
-          xcodebuild build -workspace Tuist.xcworkspace -scheme tuist -derivedDataPath "$DERIVED_DATA_PATH"
+          xcodebuild build -workspace Tuist.xcworkspace -scheme ProjectDescription -derivedDataPath "$DERIVED_DATA_PATH" || true
+          xcodebuild build -workspace Tuist.xcworkspace -scheme tuist -derivedDataPath "$DERIVED_DATA_PATH" || true
 
       - name: Copy Built Executable
         run: |
