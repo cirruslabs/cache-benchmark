@@ -73,7 +73,7 @@ jobs:
           hyperfine --warmup 1 --runs 10 \
             --setup 'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build >> ../logs/benchmark-pre-warmed-setup.log 2>&1' \
             --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData' \
-            --conclude 'tuist inspect build \
+            --conclude 'tuist inspect build' \
             'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build >> ../logs/benchmark-pre-warmed-cache.log 2>&1'
 
       - name: Upload benchmark logs
