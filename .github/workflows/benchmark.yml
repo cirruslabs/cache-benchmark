@@ -74,7 +74,8 @@ jobs:
             --setup 'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build >> ../logs/benchmark-pre-warmed-setup.log 2>&1' \
             --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData' \
             --conclude 'tuist inspect build' \
-            'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build >> ../logs/benchmark-pre-warmed-cache.log 2>&1'
+            'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build >> ../logs/benchmark-pre-warmed-cache.log 2>&1' \
+            --show-output
 
       - name: Upload benchmark logs
         uses: actions/upload-artifact@v4
