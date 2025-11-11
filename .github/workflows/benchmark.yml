@@ -37,8 +37,8 @@ jobs:
         run: |
           hyperfine --warmup 1 --runs 10 \
             --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData && ../tuist-setup-temp-project && tuist setup cache' \
-            --conclude '../tuist-cleanup-temp-project' \
-            'HANDLE="$(cat .tuist-temp-org)_$(cat .tuist-temp-project)" && xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.local/state/tuist/$HANDLE.sock" >> ../logs/benchmark-cache-uploads.log 2>&1'
+            --conclude 'tuist inspect build && rm -rf /tmp/benchmark-result-bundle.xcresult && ../tuist-cleanup-temp-project' \
+            'HANDLE="$(cat .tuist-temp-org)_$(cat .tuist-temp-project)" && xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" -resultBundlePath /tmp/benchmark-result-bundle.xcresult build COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.local/state/tuist/$HANDLE.sock" >> ../logs/benchmark-cache-uploads.log 2>&1'
 
       - name: Upload benchmark logs
         uses: actions/upload-artifact@v4
