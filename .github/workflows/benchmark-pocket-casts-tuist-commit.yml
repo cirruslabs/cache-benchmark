@@ -18,7 +18,7 @@ concurrency:
 jobs:
   cache-uploads:
     name: Clean build with cache uploads (Tuist ${{ github.event.inputs.tuist_commit }})
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -47,10 +47,6 @@ jobs:
       - name: Copy Built Executable
         run: |
           ln -s tuist-build/DerivedData/Build/Products/Debug/tuist ./tuist-built
-
-      - name: Authenticate Tuist
-        working-directory: pocket-casts-ios
-        run: TUIST_URL="https://staging.tuist.dev" ../tuist-built auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
 
       - name: Install Dependencies
         working-directory: pocket-casts-ios
@@ -63,14 +59,13 @@ jobs:
         working-directory: pocket-casts-ios
         run: |
           hyperfine --warmup 1 --runs 3 \
-            --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData && xcodebuild -project podcasts.xcodeproj -scheme pocketcasts -resolvePackageDependencies && ../tuist-setup-temp-project && ../tuist-built setup cache' \
-            'HANDLE="$(cat .tuist-temp-org)_$(cat .tuist-temp-project)" && xcodebuild -project podcasts.xcodeproj -scheme pocketcasts -destination "platform=iOS Simulator,name=iPhone 17" build SWIFT_ENABLE_COMPILE_CACHE="YES" SWIFT_ENABLE_EXPLICIT_MODULES="YES" SWIFT_USE_INTEGRATED_DRIVER="YES" CLANG_ENABLE_COMPILE_CACHE="YES" CLANG_ENABLE_MODULES="YES" COMPILATION_CACHE_ENABLE_INTEGRATED_QUERIES="YES" COMPILATION_CACHE_ENABLE_DIAGNOSTIC_REMARKS="YES" COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.local/state/tuist/$HANDLE.sock"' \
-            --conclude '../tuist-cleanup-temp-project' \
+            --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData && xcodebuild -project podcasts.xcodeproj -scheme pocketcasts -resolvePackageDependencies' \
+            'xcodebuild -project podcasts.xcodeproj -scheme pocketcasts -destination "platform=iOS Simulator,name=iPhone 17" build SWIFT_ENABLE_COMPILE_CACHE="YES" SWIFT_ENABLE_EXPLICIT_MODULES="YES" SWIFT_USE_INTEGRATED_DRIVER="YES" CLANG_ENABLE_COMPILE_CACHE="YES" CLANG_ENABLE_MODULES="YES" COMPILATION_CACHE_ENABLE_INTEGRATED_QUERIES="YES" COMPILATION_CACHE_ENABLE_DIAGNOSTIC_REMARKS="YES" COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.cirruslabs/omni-cache.sock"' \
             --show-output
 
   pre-warmed:
     name: Clean build with pre-warmed cache (Tuist ${{ github.event.inputs.tuist_commit }})
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -100,14 +95,6 @@ jobs:
         run: |
           ln -s tuist-build/DerivedData/Build/Products/Debug/tuist ./tuist-built
 
-      - name: Authenticate Tuist
-        working-directory: pocket-casts-ios
-        run: TUIST_URL="https://staging.tuist.dev" ../tuist-built auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
-
-      - name: Setup Tuist Cache
-        working-directory: pocket-casts-ios
-        run: ../tuist-built setup cache
-
       - name: Install Dependencies
         working-directory: pocket-casts-ios
         run: |
@@ -119,7 +106,7 @@ jobs:
         working-directory: pocket-casts-ios
         run: |
           hyperfine --warmup 1 --runs 3 \
-            --setup 'xcodebuild -project podcasts.xcodeproj -scheme pocketcasts -destination "platform=iOS Simulator,name=iPhone 17" build SWIFT_ENABLE_COMPILE_CACHE="YES" SWIFT_ENABLE_EXPLICIT_MODULES="YES" SWIFT_USE_INTEGRATED_DRIVER="YES" CLANG_ENABLE_COMPILE_CACHE="YES" CLANG_ENABLE_MODULES="YES" COMPILATION_CACHE_ENABLE_INTEGRATED_QUERIES="YES" COMPILATION_CACHE_ENABLE_DIAGNOSTIC_REMARKS="YES" COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.local/state/tuist/tuist_pocket-casts.sock"' \
+            --setup 'xcodebuild -project podcasts.xcodeproj -scheme pocketcasts -destination "platform=iOS Simulator,name=iPhone 17" build SWIFT_ENABLE_COMPILE_CACHE="YES" SWIFT_ENABLE_EXPLICIT_MODULES="YES" SWIFT_USE_INTEGRATED_DRIVER="YES" CLANG_ENABLE_COMPILE_CACHE="YES" CLANG_ENABLE_MODULES="YES" COMPILATION_CACHE_ENABLE_INTEGRATED_QUERIES="YES" COMPILATION_CACHE_ENABLE_DIAGNOSTIC_REMARKS="YES" COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.cirruslabs/omni-cache.sock"' \
             --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData && xcodebuild -project podcasts.xcodeproj -scheme pocketcasts -resolvePackageDependencies' \
-            'xcodebuild -project podcasts.xcodeproj -scheme pocketcasts -destination "platform=iOS Simulator,name=iPhone 17" build SWIFT_ENABLE_COMPILE_CACHE="YES" SWIFT_ENABLE_EXPLICIT_MODULES="YES" SWIFT_USE_INTEGRATED_DRIVER="YES" CLANG_ENABLE_COMPILE_CACHE="YES" CLANG_ENABLE_MODULES="YES" COMPILATION_CACHE_ENABLE_INTEGRATED_QUERIES="YES" COMPILATION_CACHE_ENABLE_DIAGNOSTIC_REMARKS="YES" COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.local/state/tuist/tuist_pocket-casts.sock"' \
+            'xcodebuild -project podcasts.xcodeproj -scheme pocketcasts -destination "platform=iOS Simulator,name=iPhone 17" build SWIFT_ENABLE_COMPILE_CACHE="YES" SWIFT_ENABLE_EXPLICIT_MODULES="YES" SWIFT_USE_INTEGRATED_DRIVER="YES" CLANG_ENABLE_COMPILE_CACHE="YES" CLANG_ENABLE_MODULES="YES" COMPILATION_CACHE_ENABLE_INTEGRATED_QUERIES="YES" COMPILATION_CACHE_ENABLE_DIAGNOSTIC_REMARKS="YES" COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.cirruslabs/omni-cache.sock"' \
             --show-output

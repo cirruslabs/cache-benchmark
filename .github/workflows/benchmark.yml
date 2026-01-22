@@ -13,21 +13,13 @@ concurrency:
 jobs:
   cache-uploads:
     name: Clean build with cache uploads
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Authenticate Tuist
-        working-directory: xcode_project_with_cache
-        run: TUIST_URL="https://staging.tuist.dev" tuist auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
-
-      - name: Setup Tuist Cache
-        working-directory: xcode_project_with_cache
-        run: tuist setup cache
 
       - name: Create logs directory
         run: mkdir logs
@@ -36,9 +28,9 @@ jobs:
         working-directory: xcode_project_with_cache
         run: |
           hyperfine --warmup 1 --runs 10 \
-            --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData && ../tuist-setup-temp-project && tuist setup cache' \
-            --conclude 'tuist inspect build && rm -rf /tmp/benchmark-result-bundle.xcresult && ../tuist-cleanup-temp-project' \
-            'HANDLE="$(cat .tuist-temp-org)_$(cat .tuist-temp-project)" && xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" -resultBundlePath /tmp/benchmark-result-bundle.xcresult build COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.local/state/tuist/$HANDLE.sock" >> ../logs/benchmark-cache-uploads.log 2>&1'
+            --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData' \
+            --conclude 'rm -rf /tmp/benchmark-result-bundle.xcresult' \
+            'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" -resultBundlePath /tmp/benchmark-result-bundle.xcresult build COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.cirruslabs/omni-cache.sock" >> ../logs/benchmark-cache-uploads.log 2>&1'
 
       - name: Upload benchmark logs
         uses: actions/upload-artifact@v4
@@ -48,21 +40,13 @@ jobs:
 
   pre-warmed:
     name: Clean build with pre-warmed cache
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Authenticate Tuist
-        working-directory: xcode_project_with_cache
-        run: TUIST_URL="https://staging.tuist.dev" tuist auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
-
-      - name: Setup Tuist Cache
-        working-directory: xcode_project_with_cache
-        run: tuist setup cache
 
       - name: Create logs directory
         run: mkdir logs
@@ -71,10 +55,10 @@ jobs:
         working-directory: xcode_project_with_cache
         run: |
           hyperfine --warmup 1 --runs 10 \
-            --setup 'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build >> ../logs/benchmark-pre-warmed-setup.log 2>&1' \
+            --setup 'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.cirruslabs/omni-cache.sock" >> ../logs/benchmark-pre-warmed-setup.log 2>&1' \
             --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData' \
-            --conclude 'tuist inspect build && rm -rf /tmp/benchmark-result-bundle.xcresult' \
-            'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" -resultBundlePath /tmp/benchmark-result-bundle.xcresult build >> ../logs/benchmark-pre-warmed-cache.log 2>&1'
+            --conclude 'rm -rf /tmp/benchmark-result-bundle.xcresult' \
+            'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" -resultBundlePath /tmp/benchmark-result-bundle.xcresult build COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.cirruslabs/omni-cache.sock" >> ../logs/benchmark-pre-warmed-cache.log 2>&1'
 
       - name: Upload benchmark logs
         uses: actions/upload-artifact@v4
@@ -84,7 +68,7 @@ jobs:
 
   no-caching:
     name: Clean build without caching
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -110,7 +94,7 @@ jobs:
 
   local-caching:
     name: Clean build with local caching
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4

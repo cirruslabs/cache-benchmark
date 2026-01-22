@@ -18,7 +18,7 @@ concurrency:
 jobs:
   cache-uploads:
     name: Clean build with cache uploads (Tuist ${{ github.event.inputs.tuist_commit }})
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -47,14 +47,6 @@ jobs:
       - name: Copy Built Executable
         run: |
           ln -s tuist-build/DerivedData/Build/Products/Debug/tuist ./tuist-built
-
-      - name: Authenticate Tuist
-        working-directory: mastodon-ios
-        run: TUIST_URL="https://staging.tuist.dev" ../tuist-built auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
-
-      - name: Setup Tuist Cache
-        working-directory: mastodon-ios
-        run: ../tuist-built setup cache
 
       - name: Setup Build Environment
         working-directory: mastodon-ios
@@ -64,14 +56,13 @@ jobs:
         working-directory: mastodon-ios
         run: |
           hyperfine --warmup 1 --runs 3 \
-            --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData && xcodebuild -project Mastodon.xcodeproj -scheme Mastodon -resolvePackageDependencies && ../tuist-setup-temp-project' \
-            'HANDLE="$(cat .tuist-temp-org)_$(cat .tuist-temp-project)" && xcodebuild -project Mastodon.xcodeproj -scheme Mastodon -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.local/state/tuist/$HANDLE.sock"' \
-            --conclude '../tuist-cleanup-temp-project' \
+            --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData && xcodebuild -project Mastodon.xcodeproj -scheme Mastodon -resolvePackageDependencies' \
+            'xcodebuild -project Mastodon.xcodeproj -scheme Mastodon -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.cirruslabs/omni-cache.sock"' \
             --show-output
 
   pre-warmed:
     name: Clean build with pre-warmed cache (Tuist ${{ github.event.inputs.tuist_commit }})
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -100,14 +91,6 @@ jobs:
       - name: Copy Built Executable
         run: |
           ln -s tuist-build/DerivedData/Build/Products/Debug/tuist ./tuist-built
-
-      - name: Authenticate Tuist
-        working-directory: mastodon-ios
-        run: TUIST_URL="https://staging.tuist.dev" ../tuist-built auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
-
-      - name: Setup Tuist Cache
-        working-directory: mastodon-ios
-        run: ../tuist-built setup cache
 
       - name: Setup Build Environment
         working-directory: mastodon-ios
@@ -117,14 +100,14 @@ jobs:
         working-directory: mastodon-ios
         run: |
           hyperfine --warmup 1 --runs 3 \
-            --setup 'xcodebuild -project Mastodon.xcodeproj -scheme Mastodon -destination "platform=iOS Simulator,name=iPhone 17" build' \
+            --setup 'xcodebuild -project Mastodon.xcodeproj -scheme Mastodon -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.cirruslabs/omni-cache.sock"' \
             --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData && xcodebuild -project Mastodon.xcodeproj -scheme Mastodon -resolvePackageDependencies' \
-            'xcodebuild -project Mastodon.xcodeproj -scheme Mastodon -destination "platform=iOS Simulator,name=iPhone 17" build' \
+            'xcodebuild -project Mastodon.xcodeproj -scheme Mastodon -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.cirruslabs/omni-cache.sock"' \
             --show-output
 
   no-cache:
     name: Clean build without caching (Tuist ${{ github.event.inputs.tuist_commit }})
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -153,14 +136,6 @@ jobs:
       - name: Copy Built Executable
         run: |
           ln -s tuist-build/DerivedData/Build/Products/Debug/tuist ./tuist-built
-
-      - name: Authenticate Tuist
-        working-directory: mastodon-ios
-        run: TUIST_URL="https://staging.tuist.dev" ../tuist-built auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
-
-      - name: Setup Tuist Cache
-        working-directory: mastodon-ios
-        run: ../tuist-built setup cache
 
       - name: Setup Build Environment
         working-directory: mastodon-ios
@@ -176,7 +151,7 @@ jobs:
 
   local-cache:
     name: Clean build with local caching (Tuist ${{ github.event.inputs.tuist_commit }})
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -205,14 +180,6 @@ jobs:
       - name: Copy Built Executable
         run: |
           ln -s tuist-build/DerivedData/Build/Products/Debug/tuist ./tuist-built
-
-      - name: Authenticate Tuist
-        working-directory: mastodon-ios
-        run: TUIST_URL="https://staging.tuist.dev" ../tuist-built auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
-
-      - name: Setup Tuist Cache
-        working-directory: mastodon-ios
-        run: ../tuist-built setup cache
 
       - name: Setup Build Environment
         working-directory: mastodon-ios

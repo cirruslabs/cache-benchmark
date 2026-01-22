@@ -13,21 +13,13 @@ concurrency:
 jobs:
   cache-uploads:
     name: Clean build with cache uploads
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Authenticate Tuist
-        working-directory: wikipedia-ios
-        run: TUIST_URL="https://staging.tuist.dev" tuist auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
-
-      - name: Setup Tuist Cache
-        working-directory: wikipedia-ios
-        run: tuist setup cache
 
       - name: Setup Build Environment
         working-directory: wikipedia-ios
@@ -37,28 +29,19 @@ jobs:
         working-directory: wikipedia-ios
         run: |
           hyperfine --warmup 1 --runs 3 \
-            --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData && xcodebuild -project Wikipedia.xcodeproj -scheme Wikipedia -resolvePackageDependencies && ../tuist-setup-temp-project' \
-            'HANDLE="$(cat .tuist-temp-org)_$(cat .tuist-temp-project)" && xcodebuild -project Wikipedia.xcodeproj -scheme Wikipedia -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.local/state/tuist/$HANDLE.sock"' \
-            --conclude '../tuist-cleanup-temp-project' \
+            --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData && xcodebuild -project Wikipedia.xcodeproj -scheme Wikipedia -resolvePackageDependencies' \
+            'xcodebuild -project Wikipedia.xcodeproj -scheme Wikipedia -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.cirruslabs/omni-cache.sock"' \
             --show-output
 
   pre-warmed:
     name: Clean build with pre-warmed cache
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Authenticate Tuist
-        working-directory: wikipedia-ios
-        run: TUIST_URL="https://staging.tuist.dev" tuist auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
-
-      - name: Setup Tuist Cache
-        working-directory: wikipedia-ios
-        run: tuist setup cache
 
       - name: Setup Build Environment
         working-directory: wikipedia-ios
@@ -68,28 +51,20 @@ jobs:
         working-directory: wikipedia-ios
         run: |
           hyperfine --warmup 1 --runs 3 \
-            --setup 'xcodebuild -project Wikipedia.xcodeproj -scheme Wikipedia -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.local/state/tuist/tuist_wikipedia.sock"' \
+            --setup 'xcodebuild -project Wikipedia.xcodeproj -scheme Wikipedia -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.cirruslabs/omni-cache.sock"' \
             --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData && xcodebuild -project Wikipedia.xcodeproj -scheme Wikipedia -resolvePackageDependencies' \
-            'xcodebuild -project Wikipedia.xcodeproj -scheme Wikipedia -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.local/state/tuist/tuist_wikipedia.sock"' \
+            'xcodebuild -project Wikipedia.xcodeproj -scheme Wikipedia -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.cirruslabs/omni-cache.sock"' \
             --show-output
 
   no-cache:
     name: Clean build without caching
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Authenticate Tuist
-        working-directory: wikipedia-ios
-        run: TUIST_URL="https://staging.tuist.dev" tuist auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
-
-      - name: Setup Tuist Cache
-        working-directory: wikipedia-ios
-        run: tuist setup cache
 
       - name: Setup Build Environment
         working-directory: wikipedia-ios
@@ -105,21 +80,13 @@ jobs:
 
   local-cache:
     name: Clean build with local caching
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Authenticate Tuist
-        working-directory: wikipedia-ios
-        run: TUIST_URL="https://staging.tuist.dev" tuist auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
-
-      - name: Setup Tuist Cache
-        working-directory: wikipedia-ios
-        run: tuist setup cache
 
       - name: Setup Build Environment
         working-directory: wikipedia-ios

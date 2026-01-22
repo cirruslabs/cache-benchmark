@@ -18,7 +18,7 @@ concurrency:
 jobs:
   benchmark-tuist-specific-commit:
     name: Benchmark Tuist from Commit ${{ github.event.inputs.tuist_commit }}
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -48,28 +48,19 @@ jobs:
         run: |
           ln -s tuist-build/DerivedData/Build/Products/Debug/tuist ./tuist-built
 
-      - name: Authenticate Tuist
-        working-directory: xcode_project_with_cache
-        run: TUIST_URL="https://staging.tuist.dev" ../tuist-built auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
-
-      - name: Setup Tuist Cache
-        working-directory: xcode_project_with_cache
-        run: ../tuist-built setup cache
-
       - name: Benchmark clean build with cache uploads (Built Tuist)
         working-directory: xcode_project_with_cache
         run: |
           hyperfine --warmup 1 --runs 10 \
-            --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData && ../tuist-setup-temp-project && ../tuist-built setup cache' \
-            --conclude '../tuist-cleanup-temp-project' \
-            'HANDLE="$(cat .tuist-temp-org)_$(cat .tuist-temp-project)" && xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.local/state/tuist/$HANDLE.sock"' \
+            --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData' \
+            'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.cirruslabs/omni-cache.sock"' \
             --show-output
 
       - name: Benchmark clean build with pre-warmed cache (Built Tuist)
         working-directory: xcode_project_with_cache
         run: |
           hyperfine --warmup 1 --runs 10 \
-            --setup 'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build' \
+            --setup 'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.cirruslabs/omni-cache.sock"' \
             --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData' \
-            'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build' \
+            'xcodebuild -project App.xcodeproj -scheme App -destination "platform=iOS Simulator,name=iPhone 17" build COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.cirruslabs/omni-cache.sock"' \
             --show-output

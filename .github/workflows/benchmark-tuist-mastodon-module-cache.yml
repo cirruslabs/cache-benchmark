@@ -13,17 +13,13 @@ concurrency:
 jobs:
   cache-uploads:
     name: Clean build with cache uploads
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Authenticate Tuist
-        working-directory: mastodon-tuist-ios
-        run: TUIST_URL="https://staging.tuist.dev" tuist auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
 
       - name: Install dependencies
         working-directory: mastodon-tuist-ios
@@ -39,17 +35,13 @@ jobs:
 
   pre-warmed:
     name: Clean build with pre-warmed cache
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Authenticate Tuist
-        working-directory: mastodon-tuist-ios
-        run: TUIST_URL="https://staging.tuist.dev" tuist auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
 
       - name: Install dependencies
         working-directory: mastodon-tuist-ios
@@ -63,24 +55,20 @@ jobs:
         working-directory: mastodon-tuist-ios
         run: |
           hyperfine --warmup 1 --runs 5 \
-            --setup 'xcodebuild -workspace MastodonTuist.xcworkspace -scheme Mastodon build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.local/state/tuist/tuist_mastodon.sock"' \
+            --setup 'xcodebuild -workspace MastodonTuist.xcworkspace -scheme Mastodon build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.cirruslabs/omni-cache.sock"' \
             --prepare 'rm -rf ~/Library/Developer/Xcode/DerivedData && tuist clean binaries' \
-            'tuist generate Mastodon && xcodebuild -workspace MastodonTuist.xcworkspace -scheme Mastodon build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.local/state/tuist/tuist_mastodon.sock"' \
+            'tuist generate Mastodon && xcodebuild -workspace MastodonTuist.xcworkspace -scheme Mastodon build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO COMPILATION_CACHE_ENABLE_CACHING="YES" COMPILATION_CACHE_ENABLE_PLUGIN="YES" COMPILATION_CACHE_REMOTE_SERVICE_PATH="$HOME/.cirruslabs/omni-cache.sock"' \
             --show-output
 
   no-cache:
     name: Clean build without caching
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Authenticate Tuist
-        working-directory: mastodon-tuist-ios
-        run: TUIST_URL="https://staging.tuist.dev" tuist auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
 
       - name: Install dependencies
         working-directory: mastodon-tuist-ios
@@ -100,17 +88,13 @@ jobs:
 
   local-cache:
     name: Clean build with local caching
-    runs-on: namespace-profile-default-macos
+    runs-on: ghcr.io/cirruslabs/macos-runner:tahoe
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Authenticate Tuist
-        working-directory: mastodon-tuist-ios
-        run: TUIST_URL="https://staging.tuist.dev" tuist auth login --email tuistrocks@tuist.dev --password ${{ secrets.TUIST_TEST_ACCOUNT_PASSWORD }}
 
       - name: Install dependencies
         working-directory: mastodon-tuist-ios
